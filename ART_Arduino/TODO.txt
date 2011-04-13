@@ -1,0 +1,5 @@
+magnetometer
+
+temperature compensation
+
+accelerometer and yaw correction on DCM
