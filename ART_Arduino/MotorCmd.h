@@ -1,3 +1,25 @@
+//      MotorCmd.h
+//      Motor status and command I/O; PID control.
+//
+//      Copyright (C) 2011 Sam (Yujia Zhai) <yujia.zhai@usc.edu>
+//      Aerial Robotics Team, USC Robotics Society - http://www.uscrs.org - http://uscrs.googlecode.com
+//
+//      This program is free software; you can redistribute it and/or modify
+//      it under the terms of the GNU General Public License as published by
+//      the Free Software Foundation; either version 2 of the License, or
+//      (at your option) any later version.
+//      
+//      This program is distributed in the hope that it will be useful,
+//      but WITHOUT ANY WARRANTY; without even the implied warranty of
+//      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//      GNU General Public License for more details.
+//      
+//      You should have received a copy of the GNU General Public License
+//      along with this program; if not, please refer to the online version on
+//      http://www.gnu.org/licenses/gpl.html, or write to the Free Software
+//      Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+//      MA 02110-1301, USA.
+
 #ifndef _MOTOR_
 #define _MOTOR_
 
@@ -5,29 +27,42 @@
 
 class MotorCmd
 {
-  private:
+  public:
 	struct PID
 	{
 		float Kp, Ki, Kd;
 		float P, I, D;
-		
+		float threshold;
 		float P_prev;
+
+		PID() {}
+		PID(int _Kp, int _Ki, int _Kd): Kp(_Kp), Ki(_Ki), Kd(_Kd), P(0), I(0), D(0), P_prev(0), threshold(100) {}
 		
-		PID(int _Kp, int _Ki, int _Kd): Kp(_Kp), Ki(_Ki), Kd(_Kd), P(0), I(0), D(0), P_prev(0) {}
-		
-		process(float value_obj, float value_ref, int Dt)
+		float process(float value_obj, float value_ref, float Dt)
 		{
-			P = value_obj - value_ref;
+			P = constrain(value_obj - value_ref, -threshold, threshold);
 			I += P * Dt;
+			I = constrain(I, -20, 20);
 			D = (P - P_prev) / Dt;
-			
-			p_prev = P;
-			
+			P_prev = P;
+
 			return (Kp * P + Ki * I + Kd * D);
 		}
-	}
+		
+		/** use the D result from DCM **/
+		float process_dcm(float value_obj, float value_ref, float Dt, float D_dcm)
+		{
+			P = constrain(value_obj - value_ref, -threshold, threshold);
+			I += P * Dt;
+			I = constrain(I, -20, 20);
+			D = D_dcm;
+			P_prev = P;
+
+			return (Kp * P + Ki * I + Kd * D);
+		}
+	};
 	
-	APM_RC& rc;
+	DCM& dcm;
 	Sensor& sensor;
 	
 	int old_rc_reading[4];
@@ -38,32 +73,35 @@ class MotorCmd
 	int pilot_roll, pilot_pitch, pilot_yaw, pilot_throttle;
 	int OutputCmd[4]; // motor 1, 2, 3, 4
 	
-	static const mid_throttle = 1200;
-	static const mid_channel = 1500;
-	static const min_channel = 1100;
-	static const max_channel = 2000;
-	static const threshold_change = 40;
+	static const int mid_throttle = 1200;
+	static const int mid_channel = 1500;
+	static const int min_channel = 1100;
+	static const int max_channel = 2000;
+	static const int threshold_change = 40;
 
 	bool serial_pilot_mode;
 	bool motors_armed;
 	
   public:	
-	MotorCmd(APM_RC& _rc, Sensor& _sensor): rc(_rc), sensor(_sensor),
-		controlroll(0), controlpitch(0), controlyaw(0),
-		serial_pilot_mode(true), motors_armed(false)
+	MotorCmd(Sensor& _sensor, DCM& _dcm): sensor(_sensor), dcm(_dcm),
+		control_roll(0), control_pitch(0), control_yaw(0),
+		serial_pilot_mode(false), motors_armed(false)
 	{
 		pid_roll.Kp = 3.0;
 		pid_roll.Ki = 0.0;
 		pid_roll.Kd = 1.0;
+		pid_roll.threshold = 60;
 		pid_pitch.Kp = 3.0;
 		pid_pitch.Ki = 0.0;
 		pid_pitch.Kd = 1.0;
+		pid_pitch.threshold = 60;
 		pid_yaw.Kp = 2.0;
 		pid_yaw.Ki = 0.0;
 		pid_yaw.Kd = 0.0;
+		pid_yaw.threshold = 80;
 		
 		for(int i = 0; i < 4; i++)
-			old_rc_reading[i] = min_channel;
+			old_rc_reading[i] = mid_throttle;
 	}
 	
 	void getCommands(){
@@ -81,37 +119,40 @@ class MotorCmd
 			temp = APM_RC.InputCh(1);
 			pilot_pitch = - 0.1 * (constrain(temp, old_rc_reading[1] - threshold_change, old_rc_reading[1] + threshold_change) - mid_channel);
 			old_rc_reading[1] = temp;
-			
+
 			temp = APM_RC.InputCh(3);
-			pilot_yaw = 0.1 * (constrain(temp, old_rc_reading[3] - threshold_change, old_rc_reading[3] + threshold_change) - mid_channel);
+			pilot_yaw = 1.0 * (constrain(temp, old_rc_reading[3] - threshold_change, old_rc_reading[3] + threshold_change) - mid_channel);
 			old_rc_reading[3] = temp;
-			
+
 			temp = APM_RC.InputCh(2);
-			pilot_throttle = constrain(temp, old_rc_reading[2] - threshold_change, old_rc_reading[2] + threshold_change);
+			pilot_throttle = temp;
 			old_rc_reading[2] = temp;
-			
-			if(old_rc_reading[3] < 1200)
-				motors_armed = false;
-			else if(old_rc_reading[3] > 1800)
-				motors_armed = true;
 		}
 	}
 	
-	void processPID(int Dt)
+	void processPID(float Dt)
 	{
-		control_roll = pid_roll.process(pilot_roll, ToDeg(sensor.get_gyro().x) ,Dt);
-		control_pitch = pid_pitch.process(pilot_pitch, ToDeg(sensor.get_gyro().y) ,Dt);
-		control_yaw = pid_yaw.process(pilot_yaw, ToDeg(sensor.get_gyro().z) ,Dt);
+		control_roll = pid_roll.process_dcm(pilot_roll, ToDeg(dcm.roll) ,Dt, - ToDeg(dcm.omega_integ_corr.x));
+		control_pitch = pid_pitch.process_dcm(pilot_pitch, ToDeg(dcm.pitch) ,Dt, - ToDeg(dcm.omega_integ_corr.y));
+		control_yaw = pid_yaw.process_dcm(pilot_yaw, 0.5 * sensor.get_gyro().z, Dt, - ToDeg(dcm.omega_integ_corr.z));
 	}
 	
 	void applyCommands()
 	{
+		if(pilot_throttle < mid_throttle)
+		{
+			control_yaw = 0;
+			if(old_rc_reading[3] < 1200)
+    				motors_armed = false;
+	    		else if(old_rc_reading[3] > 1800)
+				motors_armed = true;
+		}
 		if(motors_armed)
 		{
-			OutputCmd[0] = constrain(pilot_throttle + control_roll + control_pitch - control_yaw, 1100,2000);
-			OutputCmd[1] = constrain(pilot_throttle + control_roll - control_pitch + control_yaw, 1100,2000);
-			OutputCmd[2] = constrain(pilot_throttle - control_roll - control_pitch - control_yaw, 1100,2000);
-			OutputCmd[3] = constrain(pilot_throttle - control_roll + control_pitch + control_yaw, 1100,2000);
+			OutputCmd[0] = constrain(pilot_throttle + control_roll + control_pitch - control_yaw, 1100, 2000);
+			OutputCmd[1] = constrain(pilot_throttle + control_roll - control_pitch + control_yaw, 1100, 2000);
+			OutputCmd[2] = constrain(pilot_throttle - control_roll - control_pitch - control_yaw, 1100, 2000);
+			OutputCmd[3] = constrain(pilot_throttle - control_roll + control_pitch + control_yaw, 1100, 2000);
 			APM_RC.OutputCh(0, OutputCmd[0]);
 			APM_RC.OutputCh(1, OutputCmd[1]);
 			APM_RC.OutputCh(2, OutputCmd[2]);

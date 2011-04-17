@@ -1,5 +1,7 @@
 magnetometer
 
+sonar
+
 temperature compensation
 
-accelerometer and yaw correction on DCM
+accelerometer

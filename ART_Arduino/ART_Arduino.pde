@@ -15,42 +15,44 @@
 //      GNU General Public License for more details.
 //      
 //      You should have received a copy of the GNU General Public License
-//      along with this program; if not, write to the Free Software
+//      along with this program; if not, please refer to the online version on
+//      http://www.gnu.org/licenses/gpl.html, or write to the Free Software
 //      Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 //      MA 02110-1301, USA.
 
 #include "AP_Math.h"
-#include "AP_ADC.h"
+#include <AP_ADC.h>
 #include "APM_RC.h"
 #include "Sensor.h"
 #include "DCM.h"
 #include "SerialIO.h"
 #include "Board.h"
+#include "MotorCmd.h"
 
 class Main
 {
   public:
 	Board board;
 	SerialIO io;
-	AP_ADC adc;
-	APM_RC rc;
 	Sensor sensor;
 	DCM dcm;
+	AP_ADC adc;
 	MotorCmd motor;
 	
 	Vector3f raw_gyro, raw_accel; // order: roll, pitch; yaw, x, y, z
 	int raw_motor[4]; // order: roll, pitch, throttle, yaw
 	
-	Main(): sensor(adc), dcm(sensor), motor(rc, sensor) {}
+	Main(): sensor(adc), dcm(sensor), motor(sensor, dcm) {}
 	
 	void init()
 	{
-		io.init();
+  		io.init();
 		board.init();
 		
 		board.ledon(red);
-		
 		adc.init();
+		APM_RC.Init();
+		delay(100);
 		sensor.init();
 		
 		board.ledoff(red);
@@ -58,15 +60,18 @@ class Main
 	
 	void slowloop(float _interval)
 	{
-		io.print_sensor(sensor);
-		io.print_dcm(dcm);
+		//io.print_sensor(sensor);
+		//io.print_dcm(dcm);
+                //io.write_dcm(dcm);
+                io.print_motor_detail(motor);
+       		Serial.println("");
 	}
 	
 	void fastloop(float _interval)
 	{
 		dcm.update_DCM(_interval);
-		motor.getCommands();
-		motor.processPID(_interval);
+                motor.getCommands();
+                motor.processPID(_interval);
 		motor.applyCommands();
 	}
 };
