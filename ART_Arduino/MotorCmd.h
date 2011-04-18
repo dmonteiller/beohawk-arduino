@@ -78,7 +78,9 @@ class MotorCmd
 		pid_yaw.Ki = 0.0;
 		pid_yaw.Kd = 0.0;
 		pid_yaw.threshold = 80;
-				
+		
+		APM_RC.Init();
+		
 		/** calibrate the motors **/
 		APM_RC.OutputCh(0,1100);
 		APM_RC.OutputCh(1,1100);

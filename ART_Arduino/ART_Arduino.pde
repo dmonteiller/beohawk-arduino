@@ -50,7 +50,6 @@ class Main
 		
 		board.ledon(red);
 		adc.init();
-		APM_RC.Init();
 		delay(100);
 		sensor.init();
 		
