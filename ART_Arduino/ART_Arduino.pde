@@ -15,8 +15,7 @@
 //      GNU General Public License for more details.
 //      
 //      You should have received a copy of the GNU General Public License
-//      along with this program; if not, please refer to the online version on
-//      http://www.gnu.org/licenses/gpl.html, or write to the Free Software
+//      along with this program; if not, write to the Free Software
 //      Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 //      MA 02110-1301, USA.
 
@@ -62,8 +61,10 @@ class Main
 	{
 		//io.print_sensor(sensor);
 		//io.print_dcm(dcm);
+		io.print_motor(motor);
+                io.print_motor_cmdraw(motor);
                 //io.write_dcm(dcm);
-                io.print_motor_detail(motor);
+                //io.print_motor_detail(motor);
        		Serial.println("");
 	}
 	

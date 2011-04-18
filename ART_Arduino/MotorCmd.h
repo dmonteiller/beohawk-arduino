@@ -1,25 +1,3 @@
-//      MotorCmd.h
-//      Motor status and command I/O; PID control.
-//
-//      Copyright (C) 2011 Sam (Yujia Zhai) <yujia.zhai@usc.edu>
-//      Aerial Robotics Team, USC Robotics Society - http://www.uscrs.org - http://uscrs.googlecode.com
-//
-//      This program is free software; you can redistribute it and/or modify
-//      it under the terms of the GNU General Public License as published by
-//      the Free Software Foundation; either version 2 of the License, or
-//      (at your option) any later version.
-//      
-//      This program is distributed in the hope that it will be useful,
-//      but WITHOUT ANY WARRANTY; without even the implied warranty of
-//      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//      GNU General Public License for more details.
-//      
-//      You should have received a copy of the GNU General Public License
-//      along with this program; if not, please refer to the online version on
-//      http://www.gnu.org/licenses/gpl.html, or write to the Free Software
-//      Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-//      MA 02110-1301, USA.
-
 #ifndef _MOTOR_
 #define _MOTOR_
 
@@ -36,7 +14,7 @@ class MotorCmd
 		float P_prev;
 
 		PID() {}
-		PID(int _Kp, int _Ki, int _Kd): Kp(_Kp), Ki(_Ki), Kd(_Kd), P(0), I(0), D(0), P_prev(0), threshold(100) {}
+		PID(float _Kp, float _Ki, float _Kd): Kp(_Kp), Ki(_Ki), Kd(_Kd), P(0), I(0), D(0), P_prev(0), threshold(100) {}
 		
 		float process(float value_obj, float value_ref, float Dt)
 		{
@@ -70,7 +48,8 @@ class MotorCmd
 	struct PID pid_roll, pid_pitch, pid_yaw;
 	
 	float control_roll, control_pitch, control_yaw;
-	int pilot_roll, pilot_pitch, pilot_yaw, pilot_throttle;
+	float pilot_roll, pilot_pitch, pilot_yaw, pilot_throttle;
+
 	int OutputCmd[4]; // motor 1, 2, 3, 4
 	
 	static const int mid_throttle = 1200;
@@ -99,10 +78,24 @@ class MotorCmd
 		pid_yaw.Ki = 0.0;
 		pid_yaw.Kd = 0.0;
 		pid_yaw.threshold = 80;
-		
-		for(int i = 0; i < 4; i++)
-			old_rc_reading[i] = mid_throttle;
-	}
+				
+		/** calibrate the motors **/
+		APM_RC.OutputCh(0,1100);
+		APM_RC.OutputCh(1,1100);
+		APM_RC.OutputCh(2,1100);
+		APM_RC.OutputCh(3,1100);
+		delay(500);
+		APM_RC.OutputCh(0,2000);
+		APM_RC.OutputCh(1,2000);
+		APM_RC.OutputCh(2,2000);
+		APM_RC.OutputCh(3,2000);
+		delay(500);  
+		APM_RC.OutputCh(0,1100);
+		APM_RC.OutputCh(1,1100);
+		APM_RC.OutputCh(2,1100);
+		APM_RC.OutputCh(3,1100);
+		delay(500);
+  	}
 	
 	void getCommands(){
 		if(serial_pilot_mode){
@@ -149,10 +142,11 @@ class MotorCmd
 		}
 		if(motors_armed)
 		{
-			OutputCmd[0] = constrain(pilot_throttle + control_roll + control_pitch - control_yaw, 1100, 2000);
-			OutputCmd[1] = constrain(pilot_throttle + control_roll - control_pitch + control_yaw, 1100, 2000);
-			OutputCmd[2] = constrain(pilot_throttle - control_roll - control_pitch - control_yaw, 1100, 2000);
-			OutputCmd[3] = constrain(pilot_throttle - control_roll + control_pitch + control_yaw, 1100, 2000);
+			OutputCmd[0] = constrain(pilot_throttle + control_roll + control_pitch - control_yaw, min_channel, max_channel);
+			OutputCmd[1] = constrain(pilot_throttle + control_roll - control_pitch + control_yaw, min_channel, max_channel);
+			OutputCmd[2] = constrain(pilot_throttle - control_roll - control_pitch - control_yaw, min_channel, max_channel);
+			OutputCmd[3] = constrain(pilot_throttle - control_roll + control_pitch + control_yaw, min_channel, max_channel);
+
 			APM_RC.OutputCh(0, OutputCmd[0]);
 			APM_RC.OutputCh(1, OutputCmd[1]);
 			APM_RC.OutputCh(2, OutputCmd[2]);
@@ -160,10 +154,10 @@ class MotorCmd
 		} 
 		else
 		{
-			APM_RC.OutputCh(0,1100);
-			APM_RC.OutputCh(1,1100);
-			APM_RC.OutputCh(2,1100);
-			APM_RC.OutputCh(3,1100);
+			APM_RC.OutputCh(0, min_channel);
+			APM_RC.OutputCh(1, min_channel);
+			APM_RC.OutputCh(2, min_channel);
+			APM_RC.OutputCh(3, min_channel);
 		}
 	}
 };
