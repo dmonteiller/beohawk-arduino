@@ -45,9 +45,9 @@ class MotorCmd
 	
 	int old_rc_reading[4];
 	
-	struct PID pid_roll, pid_pitch, pid_yaw;
+	struct PID pid_roll, pid_pitch, pid_yaw, pid_altitude;
 	
-	float control_roll, control_pitch, control_yaw;
+	float control_roll, control_pitch, control_yaw, control_altitude;
 	float pilot_roll, pilot_pitch, pilot_yaw, pilot_throttle;
 
 	int OutputCmd[4]; // motor 1, 2, 3, 4
@@ -58,8 +58,12 @@ class MotorCmd
 	static const int max_channel = 2000;
 	static const int threshold_change = 40;
 
+        static const int desired_altitude = 60; // remove static const when actually sending commands
+        int sonar_value;
+
 	bool serial_pilot_mode;
 	bool motors_armed;
+        bool holding_altitude;
 	
   public:	
 	MotorCmd(Sensor& _sensor, DCM& _dcm): sensor(_sensor), dcm(_dcm),
@@ -78,6 +82,10 @@ class MotorCmd
 		pid_yaw.Ki = 0.0;
 		pid_yaw.Kd = 0.0;
 		pid_yaw.threshold = 80;
+                pid_altitude.Kp = 2.0;
+                pid_altitude.Ki = 0.0;
+                pid_altitude.Kd = 0.0;
+                pid_altitude.threshold = 50;
 		
 		APM_RC.Init();
 		
@@ -122,6 +130,15 @@ class MotorCmd
 			temp = APM_RC.InputCh(2);
 			pilot_throttle = temp;
 			old_rc_reading[2] = temp;
+
+                        temp = APM_RC.InputCh(4);
+                        if ( temp > 1500 ) {
+                          // start altitude hold
+                          holding_altitude = true;
+                        } else {
+                          // end altitude hold
+                          holding_altitude = false;
+                        }
 		}
 	}
 	
@@ -130,6 +147,7 @@ class MotorCmd
 		control_roll = pid_roll.process_dcm(pilot_roll, ToDeg(dcm.roll) ,Dt, - ToDeg(dcm.omega_integ_corr.x));
 		control_pitch = pid_pitch.process_dcm(pilot_pitch, ToDeg(dcm.pitch) ,Dt, - ToDeg(dcm.omega_integ_corr.y));
 		control_yaw = pid_yaw.process_dcm(pilot_yaw, 0.5 * sensor.get_gyro().z, Dt, - ToDeg(dcm.omega_integ_corr.z));
+                control_altitude = pid_altitude.process(float(desired_altitude),float(sonar_value),Dt);
 	}
 	
 	void applyCommands()
@@ -144,10 +162,14 @@ class MotorCmd
 		}
 		if(motors_armed)
 		{
-			OutputCmd[0] = constrain(pilot_throttle + control_roll + control_pitch - control_yaw, min_channel, max_channel);
-			OutputCmd[1] = constrain(pilot_throttle + control_roll - control_pitch + control_yaw, min_channel, max_channel);
-			OutputCmd[2] = constrain(pilot_throttle - control_roll - control_pitch - control_yaw, min_channel, max_channel);
-			OutputCmd[3] = constrain(pilot_throttle - control_roll + control_pitch + control_yaw, min_channel, max_channel);
+                        if ( !holding_altitude ) {
+                          control_altitude = 0.0;
+                        }
+                        
+			OutputCmd[0] = constrain(pilot_throttle + control_roll + control_pitch - control_yaw + control_altitude, min_channel, max_channel);
+			OutputCmd[1] = constrain(pilot_throttle + control_roll - control_pitch + control_yaw + control_altitude, min_channel, max_channel);
+			OutputCmd[2] = constrain(pilot_throttle - control_roll - control_pitch - control_yaw + control_altitude, min_channel, max_channel);
+			OutputCmd[3] = constrain(pilot_throttle - control_roll + control_pitch + control_yaw + control_altitude, min_channel, max_channel);
 
 			APM_RC.OutputCh(0, OutputCmd[0]);
 			APM_RC.OutputCh(1, OutputCmd[1]);
@@ -162,6 +184,10 @@ class MotorCmd
 			APM_RC.OutputCh(3, min_channel);
 		}
 	}
+
+        void setSonarValue(int value) {
+          sonar_value = value;
+        }
 };
 
 #endif

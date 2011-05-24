@@ -64,6 +64,9 @@ class Main
                 io.print_motor_cmdraw(motor);
                 //io.write_dcm(dcm);
                 //io.print_motor_detail(motor);
+                
+                board.readSonar();
+                motor.setSonarValue(board.getAltitude());
        		Serial.println("");
 	}
 	

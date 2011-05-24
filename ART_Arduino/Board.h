@@ -24,9 +24,13 @@
 #define _BOARD_
 
 enum PINID {red = 35, yellow = 36, green = 37, switch1 = 41, switch2 = 40};
+#define SONAR_PIN A6
 
 class Board
 {
+  private:
+        float altitude;
+    
   public:
   
 	Board() {}
@@ -42,6 +46,14 @@ class Board
 
 	void ledon(PINID _id) { digitalWrite(_id, HIGH); }
 	void ledoff(PINID _id) { digitalWrite(_id, LOW); }
+
+        void readSonar() {
+          altitude = .5*altitude + .5*analogRead(SONAR_PIN);
+        }
+        
+        float getAltitude() {
+          return altitude;
+        }
 };
 
 #endif
