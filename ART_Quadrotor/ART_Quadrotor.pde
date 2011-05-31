@@ -112,12 +112,21 @@ void loop() {
         motorsArmed = 0;
       }
     }
+    
+    if ( RCInput[4] < 1500 ) {
+      holdingAltitude = true;
+    } else {
+      holdingAltitude = false;
+    }
 
     if ( motorsArmed == 1 ) {
-      motor[0] = constrain(pilotThrottle+controlRoll+controlPitch-controlYaw,1100,2000);
-      motor[1] = constrain(pilotThrottle+controlRoll-controlPitch+controlYaw,1100,2000);
-      motor[2] = constrain(pilotThrottle-controlRoll-controlPitch-controlYaw,1100,2000);
-      motor[3] = constrain(pilotThrottle-controlRoll+controlPitch+controlYaw,1100,2000);
+      if ( !holdingAltitude ) {
+        controlAltitude = 0;
+      }
+      motor[0] = constrain(pilotThrottle+controlRoll+controlPitch-controlYaw+controlAltitude,1100,2000);
+      motor[1] = constrain(pilotThrottle+controlRoll-controlPitch+controlYaw+controlAltitude,1100,2000);
+      motor[2] = constrain(pilotThrottle-controlRoll-controlPitch-controlYaw+controlAltitude,1100,2000);
+      motor[3] = constrain(pilotThrottle-controlRoll+controlPitch+controlYaw+controlAltitude,1100,2000);
       APM_RC.OutputCh(0,motor[0]);
       APM_RC.OutputCh(1,motor[1]);
       APM_RC.OutputCh(2,motor[2]);
@@ -170,6 +179,19 @@ void PIDControl() {
   //yawD = readADCCorrected(2);
 
   controlYaw= Kpyaw*yawError + Kiyaw*yawI + Kdyaw*yawD;
+  
+/////////////////////////////////////////////
+
+  altitudeError = constrain(desiredAltitude-analogRead(A6),15,500);
+
+  altitudeI += altitudeError*loopDt;
+  altitudeI = constrain(altitudeI,-20,20);
+  
+  altitudeD = (altitudeError - altitudeErrorOld)/loopDt;
+
+  controlAltitude = Kpaltitude*altitudeError + Kialtitude*altitudeI + Kdaltitude*altitudeD;  
+  
+  
 }
 
 // Maximum slope filter for radio inputs... (limit max differences between readings)

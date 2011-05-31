@@ -32,20 +32,20 @@ class Main
 {
   public:
 	Board board;
-	SerialIO io;
+	//SerialIO io;
 	Sensor sensor;
 	DCM dcm;
 	AP_ADC adc;
-	MotorCmd motor;
+	//MotorCmd motor;
 	
 	Vector3f raw_gyro, raw_accel; // order: roll, pitch; yaw, x, y, z
 	int raw_motor[4]; // order: roll, pitch, throttle, yaw
 	
-	Main(): sensor(adc), dcm(sensor), motor(sensor, dcm) {}
+	Main(): sensor(adc), dcm(sensor) {} //, motor(sensor, dcm) {}
 	
 	void init()
 	{
-  		io.init();
+  		//io.init();
 		board.init();
 		
 		board.ledon(red);
@@ -60,22 +60,22 @@ class Main
 	{
 		//io.print_sensor(sensor);
 		//io.print_dcm(dcm);
-		io.print_motor(motor);
-                io.print_motor_cmdraw(motor);
+		///io.print_motor(motor);
+                ///io.print_motor_cmdraw(motor);
                 //io.write_dcm(dcm);
                 //io.print_motor_detail(motor);
                 
                 board.readSonar();
-                motor.setSonarValue(board.getAltitude());
+                //motor.setSonarValue(board.getAltitude());
        		Serial.println("");
 	}
 	
 	void fastloop(float _interval)
 	{
 		dcm.update_DCM(_interval);
-                motor.getCommands();
-                motor.processPID(_interval);
-		motor.applyCommands();
+                //motor.getCommands();
+                //motor.processPID(_interval);
+		//motor.applyCommands();
 	}
 };
 
@@ -87,14 +87,22 @@ Main m;
 
 void setup()
 {
+        Serial.begin(115200);
+        Serial.println("I'm starting");
+        delay(500);
+    /*
 	m.init();
 	
 	time_slowloop = millis();
-	time_fastloop = millis();
+	time_fastloop = millis();*/
 }
 
 void loop()
 {
+  
+        Serial.println("I'm starting");
+        delay(500);  
+  /*
 	if(millis() - time_slowloop > INTERVAL_SLOWLOOP)
 	{
 		float interval = (millis() - time_slowloop) / 1000.0;
@@ -110,4 +118,5 @@ void loop()
 		
 		m.fastloop(interval);
 	}
+*/
 }

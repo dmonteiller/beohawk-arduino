@@ -33,6 +33,9 @@ float Kdpitch = 1.0;
 float Kpyaw = 2.0;
 float Kiyaw = 0.0;
 float Kdyaw = 0.0;
+float Kpaltitude = 2.0;
+float Kialtitude = 0.0;
+float Kdaltitude = 0.0;
 
 // Define vars //
 float loopDt = 0.02; // This will be changed per loop
@@ -41,10 +44,13 @@ long telemetryTimer = 0;
 long compassReadTimer = 0;
 
 int motorsArmed = 0;
+int desiredAltitude = 60;
+bool holdingAltitude = false;
 
 float controlRoll = 0;
 float controlPitch = 0;
 float controlYaw = 0;
+float controlAltitude = 0;
 
 float rollError;
 float rollErrorOld;
@@ -58,6 +64,10 @@ float yawError;
 float yawErrorOld;
 float yawI;
 float yawD;
+float altitudeError;
+float altitudeErrorOld;
+float altitudeI;
+float altitudeD;
 
 // ADC storage
 int ADC_Ch[6];
