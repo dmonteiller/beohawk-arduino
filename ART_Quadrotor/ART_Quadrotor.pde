@@ -21,10 +21,10 @@ void setup() {
   APM_RC.OutputCh(2,1100);
   APM_RC.OutputCh(3,1100);
   delay(1000);
-  APM_RC.OutputCh(0,2000);
+  /*APM_RC.OutputCh(0,2000);
   APM_RC.OutputCh(1,2000);
   APM_RC.OutputCh(2,2000);
-  APM_RC.OutputCh(3,2000);
+  APM_RC.OutputCh(3,2000);*/
   delay(1000);  
   APM_RC.OutputCh(0,1100);
   APM_RC.OutputCh(1,1100);
@@ -114,13 +114,18 @@ void loop() {
     }
     
     if ( RCInput[4] < 1500 ) {
-      holdingAltitude = true;
+      if ( holdingAltitude == false ) {
+        holdingAltitude = true;
+        desiredAltitude = sonarAltitude;
+      } else {
+        holdingAltitude = true;
+      }
     } else {
       holdingAltitude = false;
     }
 
     if ( motorsArmed == 1 ) {
-      if ( !holdingAltitude ) {
+      if ( !holdingAltitude || RCInput[2] < 1250 ) {
         controlAltitude = 0;
       }
       motor[0] = constrain(pilotThrottle+controlRoll+controlPitch-controlYaw+controlAltitude,1100,2000);
@@ -182,12 +187,13 @@ void PIDControl() {
   
 /////////////////////////////////////////////
 
-  altitudeError = constrain(desiredAltitude-analogRead(A6),15,500);
+  altitudeError = desiredAltitude-sonarAltitude;
 
   altitudeI += altitudeError*loopDt;
-  altitudeI = constrain(altitudeI,-20,20);
+  altitudeI = constrain(altitudeI,-30,30);
   
   altitudeD = (altitudeError - altitudeErrorOld)/loopDt;
+  altitudeErrorOld = altitudeError;
 
   controlAltitude = Kpaltitude*altitudeError + Kialtitude*altitudeI + Kdaltitude*altitudeD;  
   
@@ -229,6 +235,8 @@ void getMeasurements() {
   Normalize();
   Drift_correction();
   Euler_angles();
+  
+  sonarAltitude = sonarAltitude*.9 + constrain(analogRead(A6),15,500)*.1;
 }
 
 void calibrateLevel() {

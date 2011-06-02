@@ -33,9 +33,9 @@ float Kdpitch = 1.0;
 float Kpyaw = 2.0;
 float Kiyaw = 0.0;
 float Kdyaw = 0.0;
-float Kpaltitude = 2.0;
-float Kialtitude = 0.0;
-float Kdaltitude = 0.0;
+float Kpaltitude = 2;  //2
+float Kialtitude = 0.1;  //0.1
+float Kdaltitude = 1.2;  //1.2
 
 // Define vars //
 float loopDt = 0.02; // This will be changed per loop
@@ -45,6 +45,7 @@ long compassReadTimer = 0;
 
 int motorsArmed = 0;
 int desiredAltitude = 60;
+int sonarAltitude = 0;
 bool holdingAltitude = false;
 
 float controlRoll = 0;
