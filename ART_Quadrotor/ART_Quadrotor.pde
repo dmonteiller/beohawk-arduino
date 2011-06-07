@@ -110,24 +110,43 @@ void loop() {
       }
       if ( RCInput[3] < 1200 ) {
         motorsArmed = 0;
+        isLanding = false;
       }
     }
     
     if ( RCInput[4] < 1500 ) {
       if ( holdingAltitude == false ) {
+        altitudeI = 0;
         holdingAltitude = true;
-        desiredAltitude = sonarAltitude;
+        isLanding = false;
+        desiredAltitude = 100;
       } else {
+        pilotThrottle = 1400;
+        digitalWrite(LEDYELLOW,HIGH);
         holdingAltitude = true;
       }
     } else {
-      holdingAltitude = false;
+      if (holdingAltitude == true) {
+        holdingAltitude = false;
+        pilotThrottle = 1400;
+        isLanding = true;
+        landingTime = millis();
+      } else if (isLanding) {
+        pilotThrottle = 1400;
+         desiredAltitude = 100 - ((millis() - landingTime)/100);
+         if (sonarAltitude < 18) {
+           isLanding = false;
+         }
+      } else {
+         controlAltitude = 0; 
+      }
+      digitalWrite(LEDYELLOW,LOW);
     }
 
     if ( motorsArmed == 1 ) {
-      if ( !holdingAltitude || RCInput[2] < 1250 ) {
+   /*   if ( !holdingAltitude && !isLanding ) {
         controlAltitude = 0;
-      }
+      }*/
       motor[0] = constrain(pilotThrottle+controlRoll+controlPitch-controlYaw+controlAltitude,1100,2000);
       motor[1] = constrain(pilotThrottle+controlRoll-controlPitch+controlYaw+controlAltitude,1100,2000);
       motor[2] = constrain(pilotThrottle-controlRoll-controlPitch-controlYaw+controlAltitude,1100,2000);
@@ -190,7 +209,7 @@ void PIDControl() {
   altitudeError = desiredAltitude-sonarAltitude;
 
   altitudeI += altitudeError*loopDt;
-  altitudeI = constrain(altitudeI,-30,30);
+  altitudeI = constrain(altitudeI,-1000,1000);
   
   altitudeD = (altitudeError - altitudeErrorOld)/loopDt;
   altitudeErrorOld = altitudeError;

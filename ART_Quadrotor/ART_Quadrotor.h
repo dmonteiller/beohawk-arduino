@@ -34,7 +34,7 @@ float Kpyaw = 2.0;
 float Kiyaw = 0.0;
 float Kdyaw = 0.0;
 float Kpaltitude = 2;  //2
-float Kialtitude = 0.1;  //0.1
+float Kialtitude = 1.5;  //0.1
 float Kdaltitude = 1.2;  //1.2
 
 // Define vars //
@@ -47,6 +47,8 @@ int motorsArmed = 0;
 int desiredAltitude = 60;
 int sonarAltitude = 0;
 bool holdingAltitude = false;
+bool isLanding = false;
+long landingTime = 0;
 
 float controlRoll = 0;
 float controlPitch = 0;
