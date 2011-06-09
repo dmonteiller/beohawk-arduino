@@ -6,7 +6,7 @@ void sendTestData() {
  Serial.print(controlYaw);Serial.print(",  "); */
  Serial.print(controlAltitude);Serial.print(",  ");  
  Serial.print(analogRead(A6));Serial.print(",  ");  
- Serial.print(holdingAltitude);Serial.print(",  ");  
+ Serial.print(desiredAltitude);Serial.print(",  ");  
  Serial.print(motor[0]);Serial.print(", ");
  Serial.print(motor[1]);Serial.print(", ");
  Serial.print(motor[2]);Serial.print(", ");

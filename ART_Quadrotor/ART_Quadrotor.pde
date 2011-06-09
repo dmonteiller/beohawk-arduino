@@ -118,39 +118,44 @@ void loop() {
       if ( holdingAltitude == false ) {
         altitudeI = 0;
         holdingAltitude = true;
-        isLanding = false;
-        desiredAltitude = 100;
-      } else {
-        pilotThrottle = 1400;
-        digitalWrite(LEDYELLOW,HIGH);
-        holdingAltitude = true;
-      }
+        isManualControl = false;
+        isLanding = false;        
+        digitalWrite(LEDYELLOW,HIGH);        
+      } 
+      desiredAltitude = constrain(map(pilotThrottle,1200,1800,15,400),15,400);
+      throttle = 1400;      
     } else {
       if (holdingAltitude == true) {
         holdingAltitude = false;
-        pilotThrottle = 1400;
+        throttle = 1400;
         isLanding = true;
+        isManualControl = false;        
+        landingAltitude = sonarAltitude;
         landingTime = millis();
       } else if (isLanding) {
-        pilotThrottle = 1400;
-         desiredAltitude = 100 - ((millis() - landingTime)/100);
-         if (sonarAltitude < 18) {
-           isLanding = false;
-         }
+        throttle = 1400;
+        desiredAltitude = constrain(landingAltitude - ((millis() - landingTime)/75),0,400);
+        if (sonarAltitude < 18) {
+          isLanding = false;
+        }
       } else {
-         controlAltitude = 0; 
+        if ( isManualControl ) {
+          throttle = pilotThrottle;
+        } else if ( pilotThrottle < 1200 ) {
+          isManualControl = true;
+        } else {
+          throttle = 1200;
+        }        
+        controlAltitude = 0; 
       }
       digitalWrite(LEDYELLOW,LOW);
     }
 
     if ( motorsArmed == 1 ) {
-   /*   if ( !holdingAltitude && !isLanding ) {
-        controlAltitude = 0;
-      }*/
-      motor[0] = constrain(pilotThrottle+controlRoll+controlPitch-controlYaw+controlAltitude,1100,2000);
-      motor[1] = constrain(pilotThrottle+controlRoll-controlPitch+controlYaw+controlAltitude,1100,2000);
-      motor[2] = constrain(pilotThrottle-controlRoll-controlPitch-controlYaw+controlAltitude,1100,2000);
-      motor[3] = constrain(pilotThrottle-controlRoll+controlPitch+controlYaw+controlAltitude,1100,2000);
+      motor[0] = constrain(throttle+controlRoll+controlPitch-controlYaw+controlAltitude,1100,2000);
+      motor[1] = constrain(throttle+controlRoll-controlPitch+controlYaw+controlAltitude,1100,2000);
+      motor[2] = constrain(throttle-controlRoll-controlPitch-controlYaw+controlAltitude,1100,2000);
+      motor[3] = constrain(throttle-controlRoll+controlPitch+controlYaw+controlAltitude,1100,2000);
       APM_RC.OutputCh(0,motor[0]);
       APM_RC.OutputCh(1,motor[1]);
       APM_RC.OutputCh(2,motor[2]);
@@ -281,9 +286,5 @@ void calibrateLevel() {
 
   digitalWrite(LEDRED,LOW);
 }
-
-
-
-
 
 

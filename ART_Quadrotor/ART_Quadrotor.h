@@ -1,4 +1,3 @@
-
 #define GRAVITY 408 // 1g on the accelerometer
 #define BAUDRATE 115200
 #define MAGNETOMETER 0
@@ -44,10 +43,12 @@ long telemetryTimer = 0;
 long compassReadTimer = 0;
 
 int motorsArmed = 0;
-int desiredAltitude = 60;
+int desiredAltitude = 0;
 int sonarAltitude = 0;
+int landingAltitude = 0;
 bool holdingAltitude = false;
 bool isLanding = false;
+bool isManualControl = false;
 long landingTime = 0;
 
 float controlRoll = 0;
@@ -90,6 +91,7 @@ int pilotPitchOld = 0;
 int pilotYaw = 0;
 int pilotYawOld = 0;
 int pilotThrottle = 0;
+int throttle = 0;
 
 // DCM PID Values (these will be hard code initialized)
 float KpDCM_rollpitch = .002;
@@ -103,3 +105,4 @@ float pitch;
 float yaw;
 
 int motor[4];
+
