@@ -23,18 +23,18 @@
 #define Gyro_Scaled_Z(x) x*ToRad(Gyro_Gain_Z) //Return the scaled ADC raw data of the gyro in radians for second
 
 // PID constants
-float Kproll = 3.0;
-float Kiroll = 0.0;
-float Kdroll = 1.0;
-float Kppitch = 3.0;
-float Kipitch = 0.0;
-float Kdpitch = 1.0;
+float Kproll = 1.5;
+float Kiroll = 3.0;
+float Kdroll = 1.5;
+float Kppitch = 1.5;
+float Kipitch = 3.0;
+float Kdpitch = 1.5;
 float Kpyaw = 2.0;
 float Kiyaw = 0.0;
 float Kdyaw = 0.0;
-float Kpaltitude = 2;  //2
+float Kpaltitude = 1.5;  //2
 float Kialtitude = 1.5;  //0.1
-float Kdaltitude = 1.2;  //1.2
+float Kdaltitude = 1.6;  //1.2
 
 // Define vars //
 float loopDt = 0.02; // This will be changed per loop

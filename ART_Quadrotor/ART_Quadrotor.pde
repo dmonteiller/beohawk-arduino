@@ -105,6 +105,8 @@ void loop() {
 
     if ( pilotThrottle < 1200 ) {
       controlYaw = 0;
+      rollI = 0;
+      pitchI = 0;
       if ( RCInput[3] > 1800 ) {
         motorsArmed = 1;
       }
@@ -122,7 +124,7 @@ void loop() {
         isLanding = false;        
         digitalWrite(LEDYELLOW,HIGH);        
       } 
-      desiredAltitude = constrain(map(pilotThrottle,1200,1800,15,400),15,400);
+      desiredAltitude = desiredAltitude*.8 + constrain(map(pilotThrottle,1200,1800,15,200),15,200)*.2;
       throttle = 1400;      
     } else {
       if (holdingAltitude == true) {
@@ -134,17 +136,19 @@ void loop() {
         landingTime = millis();
       } else if (isLanding) {
         throttle = 1400;
-        desiredAltitude = constrain(landingAltitude - ((millis() - landingTime)/75),0,400);
+        desiredAltitude = constrain(landingAltitude - ((millis() - landingTime)/75),0,200);
         if (sonarAltitude < 18) {
           isLanding = false;
+          holdingAltitude = false;
+          motorsArmed = 0;
         }
       } else {
         if ( isManualControl ) {
           throttle = pilotThrottle;
-        } else if ( pilotThrottle < 1200 ) {
+        } else if ( pilotThrottle < 1150 ) {
           isManualControl = true;
         } else {
-          throttle = 1200;
+          throttle = 1100;
         }        
         controlAltitude = 0; 
       }
