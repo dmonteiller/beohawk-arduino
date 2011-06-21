@@ -1,4 +1,3 @@
-//I can update SVN!!!
 #include <Wire.h>
 #include <APM_RC.h>
 #include <APM_ADC.h>
@@ -83,17 +82,60 @@ void loop() {
     loopDt = (millis()-timer)/1000.0;
     timer = millis();
     
-    getMeasurements();    
+    getMeasurements(); 
+    
+    // Create and send serial message containing Attitude Info to PicoITX
+    id = 4;
+    data[0] = roll;
+    data[1] = pitch;
+    data[2] = yaw;
+    data[3] = sonarAltitude;
+    checkSum = id ^ data[0] ^ data[1] ^ data[2] ^ data[3];
+    Serial.write(id);
+    Serial.write(data, 4);
+    Serial.write(checkSum);
+ 
+    // Read serial message from PicoITX
+    num = Serial.available();
+    while (num >= 6) {
+       id = Serial.read();
+       data = Serial.read(4);
+       checkSum = Serial.read();
+       if ((id ^ data[0] ^ data[1] ^ data[2] ^ data[3]) == checkSum) {
+         switch (id) {
+            case 1: xError = data[0];     // Positional Error
+                    yError = data[1];
+                    // Reset serial message handlers
+                    id = 0;
+                    checkSum = 0;
+                    data = {0,0,0,0};
+                    break;
+            case 2: motorsArmed = data[0];     // Arm Motors
+                    // Reset serial message handlers
+                    id = 0;
+                    checkSum = 0;
+                    data = {0,0,0,0};
+                    break;
+            case 3: desiredAltitude = data[0];     // Desired Altitude
+                    // Reset serial message handlers
+                    id = 0;
+                    checkSum = 0;
+                    data = {0,0,0,0};
+                    break; 
+         }
+       }
+       num = Serial.available();
+    }
 
     // Read RC receiver
-    for ( int i = 0 ; i < 4 ; i++ ) {
+ /*   for ( int i = 0 ; i < 4 ; i++ ) {
       RCInput[i] = radioFilter(APM_RC.InputCh(i),RCInput[i]);
     }
 
     for ( int i = 4 ; i < 8 ; i++ ) {
       RCInput[i] = APM_RC.InputCh(i);
     }
-
+*/
     pilotRollOld = pilotRoll;
     pilotRoll = 0.1*(RCInput[0]-MIDCHANNEL);
     pilotPitchOld = pilotPitch;

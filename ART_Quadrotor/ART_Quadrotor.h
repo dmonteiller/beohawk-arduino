@@ -106,3 +106,8 @@ float yaw;
 
 int motor[4];
 
+// Serial Messages
+byte data[4] = {0,0,0,0};
+byte id = 0, checkSum = 0;
+int num = 0;
+float xError = 0, yError = 0;
