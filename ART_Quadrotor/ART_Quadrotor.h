@@ -49,6 +49,7 @@ int landingAltitude = 0;
 bool holdingAltitude = false;
 bool isLanding = false;
 bool isManualControl = false;
+bool isCompControl = false;
 long landingTime = 0;
 
 float controlRoll = 0;

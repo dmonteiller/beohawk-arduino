@@ -40,6 +40,12 @@ void processPicoITXSerial() {
                     break;
             case MSG_DESIRED_ALTITUDE: 
                     desiredAltitude = data[0];     // Desired Altitude
+                    if (desiredAltitude == 0) {
+                      isConpControl = false;
+                    } else {
+                      isCompControl = true;
+                    }
+                    holdingAltitude = true;
                     // Reset serial message handlers
                     id = 0;
                     checkSum = 0;

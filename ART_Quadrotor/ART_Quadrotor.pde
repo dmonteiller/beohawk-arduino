@@ -87,14 +87,14 @@ void loop() {
     processPicoITXSerial();
     
     // Read RC receiver
- /*   for ( int i = 0 ; i < 4 ; i++ ) {
+    for ( int i = 0 ; i < 4 ; i++ ) {
       RCInput[i] = radioFilter(APM_RC.InputCh(i),RCInput[i]);
     }
 
     for ( int i = 4 ; i < 8 ; i++ ) {
       RCInput[i] = APM_RC.InputCh(i);
     }
-*/
+
     pilotRollOld = pilotRoll;
     pilotRoll = 0.1*(RCInput[0]-MIDCHANNEL);
     pilotPitchOld = pilotPitch;
@@ -105,7 +105,7 @@ void loop() {
 
     PIDControl();
 
-    if ( pilotThrottle < 1200 ) {
+    if ( pilotThrottle < 1200 && motorsArmed == 0 ) {   //2nd condition makes it so this loop will be skipped if armed using computer instead of RC
       controlYaw = 0;
       rollI = 0;
       pitchI = 0;
@@ -129,7 +129,7 @@ void loop() {
       desiredAltitude = desiredAltitude*.8 + constrain(map(pilotThrottle,1200,1800,15,200),15,200)*.2;
       throttle = 1400;      
     } else {
-      if (holdingAltitude == true) {
+      if (holdingAltitude == true && !isCompControl) {   //When given a desiredAltitude of 0 by comp it will enter this loop and land from sonarAltitude
         holdingAltitude = false;
         throttle = 1400;
         isLanding = true;
@@ -144,7 +144,7 @@ void loop() {
           holdingAltitude = false;
           motorsArmed = 0;
         }
-      } else {
+      } else if (!isCompControl) {
         if ( isManualControl ) {
           throttle = pilotThrottle;
         } else if ( pilotThrottle < 1150 ) {
