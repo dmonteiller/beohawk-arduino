@@ -41,7 +41,7 @@ void processPicoITXSerial() {
             case MSG_DESIRED_ALTITUDE: 
                     desiredAltitude = data[0];     // Desired Altitude
                     if (desiredAltitude == 0) {
-                      isConpControl = false;
+                      isCompControl = false;
                     } else {
                       isCompControl = true;
                     }

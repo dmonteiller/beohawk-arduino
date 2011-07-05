@@ -105,7 +105,7 @@ void loop() {
 
     PIDControl();
 
-    if ( pilotThrottle < 1200 && motorsArmed == 0 ) {   //2nd condition makes it so this loop will be skipped if armed using computer instead of RC
+    if ( pilotThrottle < 1200 ) {
       controlYaw = 0;
       rollI = 0;
       pitchI = 0;
