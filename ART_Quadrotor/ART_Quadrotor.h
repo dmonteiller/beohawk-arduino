@@ -1,3 +1,5 @@
+#include <WProgram.h>
+
 #define GRAVITY 408 // 1g on the accelerometer
 #define BAUDRATE 115200
 #define MAGNETOMETER 0
@@ -48,8 +50,7 @@ int sonarAltitude = 0;
 int landingAltitude = 0;
 bool holdingAltitude = false;
 bool isLanding = false;
-bool isManualControl = false;
-bool isCompControl = false;
+bool isManualControl = true;
 long landingTime = 0;
 
 float controlRoll = 0;

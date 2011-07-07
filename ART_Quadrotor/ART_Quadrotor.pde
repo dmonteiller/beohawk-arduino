@@ -22,9 +22,9 @@ void setup() {
   APM_RC.OutputCh(3,1100);
   delay(1000);
   /*APM_RC.OutputCh(0,2000);
-  APM_RC.OutputCh(1,2000);
-  APM_RC.OutputCh(2,2000);
-  APM_RC.OutputCh(3,2000);*/
+   APM_RC.OutputCh(1,2000);
+   APM_RC.OutputCh(2,2000);
+   APM_RC.OutputCh(3,2000);*/
   delay(1000);  
   APM_RC.OutputCh(0,1100);
   APM_RC.OutputCh(1,1100);
@@ -41,7 +41,7 @@ void setup() {
   digitalWrite(LEDRED,HIGH);
 
   float aux_float[3];
-  
+
   ADC_Offset[0] = gyroOffset[0];
   ADC_Offset[1] = gyroOffset[1];
   ADC_Offset[2] = gyroOffset[2];  
@@ -53,7 +53,7 @@ void setup() {
   delay(20);
 
   long averageGyro[3] = {
-    0,0,0      };
+    0,0,0        };
 
   for ( int i = 0 ; i < 100 ; i++ ) {
     readADC();
@@ -67,7 +67,7 @@ void setup() {
   }
 
   digitalWrite(LEDRED,LOW);
-  
+
   calibrateLevel();
 
   timer = millis();
@@ -81,11 +81,11 @@ void loop() {
 
     loopDt = (millis()-timer)/1000.0;
     timer = millis();
-    
+
     getMeasurements(); 
-    
+
     processPicoITXSerial();
-    
+
     // Read RC receiver
     for ( int i = 0 ; i < 4 ; i++ ) {
       RCInput[i] = radioFilter(APM_RC.InputCh(i),RCInput[i]);
@@ -117,47 +117,74 @@ void loop() {
         isLanding = false;
       }
     }
-    
-    if ( RCInput[4] < 1500 ) {
+
+    if ( RCInput[4] < 1500 && !isManualControl ) { // Computer controlled mode
+      digitalWrite(LEDYELLOW,HIGH);            
       if ( holdingAltitude == false ) {
         altitudeI = 0;
-        holdingAltitude = true;
-        isManualControl = false;
-        isLanding = false;        
-        digitalWrite(LEDYELLOW,HIGH);        
-      } 
-      desiredAltitude = desiredAltitude*.8 + constrain(map(pilotThrottle,1200,1800,15,200),15,200)*.2;
-      throttle = 1400;      
-    } else {
-      if (holdingAltitude == true && !isCompControl) {   //When given a desiredAltitude of 0 by comp it will enter this loop and land from sonarAltitude
-        holdingAltitude = false;
-        throttle = 1400;
-        isLanding = true;
-        isManualControl = false;        
-        landingAltitude = sonarAltitude;
-        landingTime = millis();
-      } else if (isLanding) {
-        throttle = 1400;
+        throttle = 1100;
+      }       
+      if ( isLanding == true ) {
         desiredAltitude = constrain(landingAltitude - ((millis() - landingTime)/75),0,200);
         if (sonarAltitude < 18) {
           isLanding = false;
           holdingAltitude = false;
           motorsArmed = 0;
-        }
-      } else if (!isCompControl) {
-        if ( isManualControl ) {
-          throttle = pilotThrottle;
-        } else if ( pilotThrottle < 1150 ) {
-          isManualControl = true;
-        } else {
-          throttle = 1100;
         }        
-        controlAltitude = 0; 
       }
-      digitalWrite(LEDYELLOW,LOW);
+    } 
+    else {
+      isManualControl = true;
+      controlAltitude = 0; 
+      altitudeI = 0;
+      throttle = pilotThrottle;
+      digitalWrite(LEDYELLOW,LOW);      
     }
 
+
+    /*
+    if ( RCInput[4] < 1500 ) { // Computer controlled mode
+     if ( holdingAltitude == false ) {
+     altitudeI = 0;
+     holdingAltitude = true;
+     isManualControl = false;
+     isLanding = false;        
+     digitalWrite(LEDYELLOW,HIGH);        
+     } 
+     desiredAltitude = desiredAltitude*.8 + constrain(map(pilotThrottle,1200,1800,15,200),15,200)*.2;
+     throttle = 1400;      
+     } else {
+     if (holdingAltitude == true && !isCompControl) {   //When given a desiredAltitude of 0 by comp it will enter this loop and land from sonarAltitude
+     holdingAltitude = false;
+     throttle = 1400;
+     isLanding = true;
+     isManualControl = false;        
+     landingAltitude = sonarAltitude;
+     landingTime = millis();
+     } else if (isLanding) {
+     throttle = 1400;
+     desiredAltitude = constrain(landingAltitude - ((millis() - landingTime)/75),0,200);
+     if (sonarAltitude < 18) {
+     isLanding = false;
+     holdingAltitude = false;
+     motorsArmed = 0;
+     }
+     } else if (!isCompControl) {
+     if ( isManualControl ) {
+     throttle = pilotThrottle;
+     } else if ( pilotThrottle < 1150 ) {
+     isManualControl = true;
+     } else {
+     throttle = 1100;
+     }        
+     controlAltitude = 0; 
+     }
+     digitalWrite(LEDYELLOW,LOW);
+     }
+     */
+
     if ( motorsArmed == 1 ) {
+      digitalWrite(LEDRED,HIGH);      
       motor[0] = constrain(throttle+controlRoll+controlPitch-controlYaw+controlAltitude,1100,2000);
       motor[1] = constrain(throttle+controlRoll-controlPitch+controlYaw+controlAltitude,1100,2000);
       motor[2] = constrain(throttle-controlRoll-controlPitch-controlYaw+controlAltitude,1100,2000);
@@ -168,6 +195,7 @@ void loop() {
       APM_RC.OutputCh(3,motor[3]);
     } 
     else {
+      digitalWrite(LEDRED,LOW);      
       APM_RC.OutputCh(0,1100);
       APM_RC.OutputCh(1,1100);
       APM_RC.OutputCh(2,1100);
@@ -175,10 +203,10 @@ void loop() {
     }
 
   }
-  
+
   if ( millis() - telemetryTimer > 200 ) {
     telemetryTimer = millis();
-    sendTestData();
+    //sendTestData();
   }
 
 }
@@ -192,7 +220,7 @@ void PIDControl() {
   rollD = ToDeg(-Omega[0]);
 
   controlRoll = Kproll*rollError + Kiroll*rollI + Kdroll*rollD;
-  
+
   ///////////////////////////////////////
 
   pitchError = constrain(pilotPitch - ToDeg(pitch),-60,60);
@@ -204,7 +232,7 @@ void PIDControl() {
 
   controlPitch= Kppitch*pitchError + Kipitch*pitchI + Kdpitch*pitchD;
 
-/////////////////////////////////////////////
+  /////////////////////////////////////////////
 
   yawError = constrain(pilotYaw - .5*readADCCorrected(2),-80,80);
 
@@ -214,20 +242,20 @@ void PIDControl() {
   //yawD = readADCCorrected(2);
 
   controlYaw= Kpyaw*yawError + Kiyaw*yawI + Kdyaw*yawD;
-  
-/////////////////////////////////////////////
+
+  /////////////////////////////////////////////
 
   altitudeError = desiredAltitude-sonarAltitude;
 
   altitudeI += altitudeError*loopDt;
   altitudeI = constrain(altitudeI,-1000,1000);
-  
+
   altitudeD = (altitudeError - altitudeErrorOld)/loopDt;
   altitudeErrorOld = altitudeError;
 
   controlAltitude = Kpaltitude*altitudeError + Kialtitude*altitudeI + Kdaltitude*altitudeD;  
-  
-  
+
+
 }
 
 // Maximum slope filter for radio inputs... (limit max differences between readings)
@@ -265,7 +293,7 @@ void getMeasurements() {
   Normalize();
   Drift_correction();
   Euler_angles();
-  
+
   sonarAltitude = sonarAltitude*.9 + constrain(analogRead(A6),15,500)*.1;
 }
 
@@ -292,5 +320,6 @@ void calibrateLevel() {
 
   digitalWrite(LEDRED,LOW);
 }
+
 
 
