@@ -2,6 +2,10 @@
 #define MSG_POSITIONAL_ERROR 1
 #define MSG_ARM_MOTORS 2
 #define MSG_DESIRED_ALTITUDE 3
+#define MSG_PID_ROLL 'r'
+#define MSG_PID_PITCH 'p'
+#define MSG_PID_YAW 'y'
+#define MSG_PID_ALTITUDE 'a'
 
 void processPicoITXSerial() {
   // Create and send serial message containing Attitude Info to PicoITX
@@ -77,7 +81,8 @@ void processPicoITXSerial() {
         data[1] = 0;
         data[2] = 0;
         data[3] = 0;        
-        break; 
+        break;   
+        
       }
     }
     num = Serial.available();
@@ -90,7 +95,9 @@ void sendTestData() {
    Serial.print(controlYaw);Serial.print(",  "); */
   Serial.print(controlAltitude);
   Serial.print(",  ");  
-  Serial.print(analogRead(A6));
+  Serial.print(analogRead(A6));  
+  Serial.print(",  ");  
+  Serial.print(sonarAltitude);
   Serial.print(",  ");  
   Serial.print(desiredAltitude);
   Serial.print(",  ");  
@@ -119,6 +126,24 @@ void sendTestData() {
 
   Serial.println(" ");
 
+}
+
+float readFloat() {
+  byte index = 0;
+  byte timeout = 0;
+  char data[128] = "";
+  do {
+    if (Serial.available() == 0) {
+      delay(10);
+      timeout++;
+    }
+    else {
+      data[index] = Serial.read();
+      timeout = 0;
+      index++;
+    }
+  }  while ((data[constrain(index-1, 0, 128)] != ';') && (timeout < 5) && (index < 128));
+  return atof(data);
 }
 
 

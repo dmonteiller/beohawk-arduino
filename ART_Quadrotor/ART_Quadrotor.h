@@ -34,20 +34,24 @@ float Kdpitch = 1.5;
 float Kpyaw = 2.0;
 float Kiyaw = 0.0;
 float Kdyaw = 0.0;
-float Kpaltitude = 1.5;  //2
-float Kialtitude = 1.5;  //0.1
-float Kdaltitude = 1.6;  //1.2
+float Kpaltitude = 0.9;  //2
+float Kialtitude = 0.8;  //0.1
+float Kdaltitude = 0.9;  //1.2
 
 // Define vars //
 float loopDt = 0.02; // This will be changed per loop
 long timer = 0;
 long telemetryTimer = 0;
 long compassReadTimer = 0;
+long sonarTimer = 0;
 
 int motorsArmed = 0;
 int desiredAltitude = 0;
 int sonarAltitude = 0;
+int sonarData[8];
+byte currentSonarData = 0;
 int landingAltitude = 0;
+int altitudeThrottle = 0;
 bool holdingAltitude = false;
 bool isLanding = false;
 bool isManualControl = true;
