@@ -44,6 +44,7 @@ long timer = 0;
 long telemetryTimer = 0;
 long compassReadTimer = 0;
 long sonarTimer = 0;
+long otherTimer = 0;
 
 int motorsArmed = 0;
 int desiredAltitude = 0;
