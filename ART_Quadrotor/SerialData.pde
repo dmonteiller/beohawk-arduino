@@ -1,4 +1,3 @@
-
 #define MSG_POSITIONAL_ERROR 1
 #define MSG_ARM_MOTORS 2
 #define MSG_DESIRED_ALTITUDE 3
@@ -9,18 +8,19 @@
 
 void processPicoITXSerial() {
   // Create and send serial message containing Attitude Info to PicoITX
-  id = 4;
-  data[0] = roll;
-  data[1] = pitch;
-  data[2] = yaw;
-  data[3] = sonarAltitude;
-  checkSum = id ^ data[0] ^ data[1] ^ data[2] ^ data[3];
-  //Serial.write(id);
-  //Serial.write(data, 4);
-  //Serial.write(checkSum);
+  ros_rot.x = roll;
+  ros_rot.y = pitch;
+  ros_rot.z = yaw;
+  ros_alt.data = sonarAltitude;
+  
+  rotation.publish( &ros_rot );
+  altitude.publish( &ros_alt );
+  nh.spinOnce();
+  
+  //packet.checkSum = 0;
 
   // Read serial message from PicoITX
-  num = Serial.available();
+  /*num = Serial.available();
   timer = millis();
   while (num >= 6 && millis() - timer < 12) {
     id = Serial.read();
@@ -86,47 +86,8 @@ void processPicoITXSerial() {
       }
     }
     num = Serial.available();
-  }
+  }*/
 }  
-
-void sendTestData() {
-  /* Serial.print(controlRoll);Serial.print(", ");
-   Serial.print(controlPitch);Serial.print(", ");
-   Serial.print(controlYaw);Serial.print(",  "); */
-  Serial.print(controlAltitude);
-  Serial.print(",  ");  
-  Serial.print(analogRead(A6));  
-  Serial.print(",  ");  
-  Serial.print(sonarAltitude);
-  Serial.print(",  ");  
-  Serial.print(desiredAltitude);
-  Serial.print(",  ");  
-  Serial.print(motor[0]);
-  Serial.print(", ");
-  Serial.print(motor[1]);
-  Serial.print(", ");
-  Serial.print(motor[2]);
-  Serial.print(", ");
-  Serial.print(motor[3]);
-  Serial.print(", ");
-
-  Serial.print(ToDeg(roll)); 
-  Serial.print(", ");
-  Serial.print(ToDeg(pitch)); 
-  Serial.print(", ");
-  Serial.print(ToDeg(yaw)); 
-  Serial.print(", ");
-
-  /* Serial.print(readADCCorrected(0)); Serial.print(", ");
-   Serial.print(readADCCorrected(1)); Serial.print(", ");
-   Serial.print(readADCCorrected(2)); Serial.print(", ");
-   Serial.print(readADCCorrected(3)); Serial.print(", ");
-   Serial.print(readADCCorrected(4)); Serial.print(", ");
-   Serial.print(readADCCorrected(5)); Serial.print(", ");*/
-
-  Serial.println(" ");
-
-}
 
 float readFloat() {
   byte index = 0;

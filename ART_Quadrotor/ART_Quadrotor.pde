@@ -4,10 +4,16 @@
 #include <APM_Compass.h>
 #include <APM_BMP085.h>
 #include <GPS_NMEA.h>
+#include <ros.h>
+#include <std_msgs/Float32.h>
+#include <std_msgs/Int16.h>
+#include <std_msgs/Bool.h>
+#include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/Pose2D.h>
 #include "ART_Quadrotor.h"
 
 void setup() {
-  Serial.begin(BAUDRATE);
+  //Serial.begin(BAUDRATE);
 
   pinMode(LEDYELLOW,OUTPUT);
   pinMode(LEDRED,OUTPUT);
@@ -69,7 +75,15 @@ void setup() {
   digitalWrite(LEDRED,LOW);
 
   calibrateLevel();
-
+  
+  // Init ROS
+  nh.initNode();
+  nh.advertise(rotation);
+  nh.advertise(altitude);
+  nh.subscribe(command_motors);
+  nh.subscribe(command_altitude);
+  nh.subscribe(command_waypoint);
+  
   timer = millis();
   compassReadTimer = millis();  
   telemetryTimer = millis();
@@ -77,8 +91,8 @@ void setup() {
 }
 
 
-// Serial Communication Packet
-union Packet
+// PID Tuning Packet
+union PIDPacket
 {
 struct
   {
@@ -119,15 +133,13 @@ void loop() {
     sonarAltitude = smallest2; 
     smallest2 = 0;    
   }
-
+  
   if ( millis() - timer > 10 ) { // timer at 100 Hz
 
     loopDt = (millis()-timer)/1000.0;
     timer = millis();
 
     getMeasurements(); 
-
-    //processPicoITXSerial();
 
     // Read RC receiver
     for ( int i = 0 ; i < 4 ; i++ ) {
@@ -230,45 +242,12 @@ void loop() {
   }
   
 	/* ---- PID online tuning */
-  if ( millis() - otherTimer > 1000)
+  if ( millis() - otherTimer > 20)
   {
       otherTimer = millis();
-	if(Serial.available() != 0)
-  	{
-      Packet p;
-      for(int i = 0; i < 48; i++)
-        p.data[i] = Serial.read();  
-         Kproll = p.roll[0];
-	 Kiroll = p.roll[1];
-	 Kdroll = p.roll[2];
-	 Kppitch = p.pitch[0];
-	 Kipitch = p.pitch[1];
-	 Kdpitch = p.pitch[2];
-	 Kpyaw = p.yaw[0];
-	 Kiyaw = p.yaw[1];
-	 Kdyaw = p.yaw[2];
-	 Kpaltitude = p.altitude[0];
-	 Kialtitude = p.altitude[1];
-	 Kdaltitude = p.altitude[2];
-
-         Serial.print("\nroll\t");
-         Serial.print(Kproll); Serial.print("\t");
-         Serial.print(Kiroll); Serial.print("\t");
-         Serial.print(Kdroll); Serial.print("\t");   
-         Serial.print("\npitch\t");
-         Serial.print(Kppitch); Serial.print("\t");
-         Serial.print(Kipitch); Serial.print("\t");
-         Serial.print(Kdpitch); Serial.print("\t");   
-         Serial.print("\nyaw\t");
-         Serial.print(Kpyaw); Serial.print("\t");
-         Serial.print(Kiyaw); Serial.print("\t");
-         Serial.print(Kdyaw); Serial.print("\t");   
-         Serial.print("\nalt\t");
-         Serial.print(Kpaltitude); Serial.print("\t");
-         Serial.print(Kialtitude); Serial.print("\t");
-         Serial.print(Kdaltitude); Serial.print("\t");   
-    
-  	}
+      //processPIDConstants();
+      processPicoITXSerial();
+      
   }	/* ---- */
 }
 
