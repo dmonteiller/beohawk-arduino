@@ -25,18 +25,18 @@
 #define Gyro_Scaled_Z(x) x*ToRad(Gyro_Gain_Z) //Return the scaled ADC raw data of the gyro in radians for second
 
 // PID constants
-float Kproll = 1.5;
-float Kiroll = 3.0;
-float Kdroll = 1.5;
-float Kppitch = 1.5;
-float Kipitch = 3.0;
-float Kdpitch = 1.5;
-float Kpyaw = 2.0;
+float Kproll = 0.8;
+float Kiroll = 2.0;
+float Kdroll = 1.1;
+float Kppitch = 0.8;
+float Kipitch = 2.0;
+float Kdpitch = 1.1;
+float Kpyaw = 1.5;
 float Kiyaw = 0.0;
 float Kdyaw = 0.0;
-float Kpaltitude = 0.9;  //2
-float Kialtitude = 0.8;  //0.1
-float Kdaltitude = 0.9;  //1.2
+float Kpaltitude = 15.0; //21.6;  //2
+float Kialtitude = 10.0; //12.0;  //0.1
+float Kdaltitude = 15.0; //7.2;  //1.2
 
 // Define vars //
 float loopDt = 0.02; // This will be changed per loop
@@ -47,9 +47,12 @@ long sonarTimer = 0;
 long otherTimer = 0;
 
 int motorsArmed = 0;
-int desiredAltitude = 0;
-int sonarAltitude = 0;
+float desiredAltitude = 0;
+float sonarAltitude = 0;
 int sonarData[8];
+float pressureAltitude = 0;
+float groundPressureAltitude = 0;
+float actualAltitude = 0; // This is used for PID control
 byte currentSonarData = 0;
 int landingAltitude = 0;
 int altitudeThrottle = 0;
@@ -143,7 +146,7 @@ ROS_CALLBACK(respondToSetAltitude, std_msgs::Int16, new_altitude)
 }
 ROS_CALLBACK(respondToSetWaypoint, geometry_msgs::Pose2D, new_pose)
   digitalWrite(LEDGREEN, HIGH);
-  delay(200);
+  //delay(200); CANNOT PUT DELAY HERE! DELAYS ARE BLOCKING!
   digitalWrite(LEDGREEN, LOW);
 }
 

@@ -12,8 +12,15 @@
 #include <geometry_msgs/Pose2D.h>
 #include "ART_Quadrotor.h"
 
+#define USE_SERIAL
+//#define USE_ROS
+
 void setup() {
-  //Serial.begin(BAUDRATE);
+  #ifdef USE_SERIAL
+  Serial.begin(BAUDRATE);
+  #endif
+  
+  Wire.begin();
 
   pinMode(LEDYELLOW,OUTPUT);
   pinMode(LEDRED,OUTPUT);
@@ -39,6 +46,7 @@ void setup() {
   delay(1000);  
 
   APM_ADC.Init();
+  APM_BMP085.Init();
   //APM_Compass.Init();
   //GPS.Init();
   delay(100);  
@@ -59,7 +67,7 @@ void setup() {
   delay(20);
 
   long averageGyro[3] = {
-    0,0,0          };
+    0,0,0              };
 
   for ( int i = 0 ; i < 100 ; i++ ) {
     readADC();
@@ -76,14 +84,23 @@ void setup() {
 
   calibrateLevel();
   
+  // Init pressure altitude
+  for ( unsigned int i = 0 ; i < 1000 ; i++ ) {
+    readPressureAltitude();
+    delay(0);
+  }
+  groundPressureAltitude = pressureAltitude;
+
   // Init ROS
+  #ifdef USE_ROS
   nh.initNode();
   nh.advertise(rotation);
   nh.advertise(altitude);
   nh.subscribe(command_motors);
   nh.subscribe(command_altitude);
   nh.subscribe(command_waypoint);
-  
+  #endif
+
   timer = millis();
   compassReadTimer = millis();  
   telemetryTimer = millis();
@@ -94,7 +111,7 @@ void setup() {
 // PID Tuning Packet
 union PIDPacket
 {
-struct
+  struct
   {
     float roll[3];
     float pitch[3];
@@ -106,20 +123,23 @@ struct
 
 
 void loop() {
-  
+
+  // Sonar read  
   if ( millis() - sonarTimer > 50 ) {
     sonarTimer = millis();
+    
+    //sonarAltitude = sonarAltitude*.90+analogRead(A6)*.1/24.0;    
     
     if ( currentSonarData >= 8 ) {
       currentSonarData = 0;
     }
-    
+
     sonarData[currentSonarData] = analogRead(A6);
     currentSonarData++;
-    
+
     int smallest = 2000;
     int smallest2 = 0;
-    
+
     for ( unsigned int i = 0 ; i < 4 ; i++ ) {
       for ( unsigned int j = 0 ; j < 8 ; j++ ) {
         if ( sonarData[j] < smallest && sonarData[j] >= smallest2 ) {
@@ -129,11 +149,19 @@ void loop() {
       smallest2 = smallest;
       smallest = 2000;
     }
-     
-    sonarAltitude = smallest2; 
+
+    sonarAltitude = float(smallest2)/24.0; //ft 
     smallest2 = 0;    
+    
+    readPressureAltitude();
   }
   
+/*  if ( abs((pressureAltitude-groundPressureAltitude)-sonarAltitude) > 1.0 ) { // 1.0 ft disagreement
+    actualAltitude = pressureAltitude;
+  } else {*/
+  actualAltitude = sonarAltitude;
+  //}
+
   if ( millis() - timer > 10 ) { // timer at 100 Hz
 
     loopDt = (millis()-timer)/1000.0;
@@ -174,7 +202,7 @@ void loop() {
     }
 
     /* DO NOT DELETE: THIS IS FOR COMPUTER CONTROLLED ALTITUDE HOLD
-    if ( RCInput[4] < 1500 && !isManualControl ) { // Computer controlled mode
+     if ( RCInput[4] < 1500 && !isManualControl ) { // Computer controlled mode
      digitalWrite(LEDYELLOW,HIGH);            
      if ( holdingAltitude == false ) {
      altitudeI = 0;
@@ -201,8 +229,9 @@ void loop() {
     if ( RCInput[4] < 1500 ) {
       if ( holdingAltitude == false ) {
         holdingAltitude = true;        
-        desiredAltitude = sonarAltitude;
+        desiredAltitude = actualAltitude;
         altitudeThrottle = pilotThrottle;
+        controlAltitude = 0;
         digitalWrite(LEDYELLOW,HIGH);        
       } 
       throttle = altitudeThrottle;      
@@ -214,7 +243,11 @@ void loop() {
       throttle = pilotThrottle;
       digitalWrite(LEDYELLOW,LOW);
     }
-
+    
+    Serial.print(controlAltitude);
+    Serial.print('\t');
+    Serial.println(actualAltitude);
+    
     if ( motorsArmed == 1 ) {
       digitalWrite(LEDRED,HIGH);      
       motor[0] = constrain(throttle+controlRoll+controlPitch-controlYaw+controlAltitude,1100,2000);
@@ -240,15 +273,15 @@ void loop() {
     telemetryTimer = millis();
     //sendTestData();
   }
-  
-	/* ---- PID online tuning */
+
+  /* ---- PID online tuning */
   if ( millis() - otherTimer > 20)
   {
-      otherTimer = millis();
-      //processPIDConstants();
-      processPicoITXSerial();
-      
-  }	/* ---- */
+    otherTimer = millis();
+    //processPIDConstants();
+    processPicoITXSerial();
+
+  } 	/* ---- */
 }
 
 void PIDControl() {
@@ -285,7 +318,7 @@ void PIDControl() {
 
   /////////////////////////////////////////////
 
-  altitudeError = desiredAltitude-sonarAltitude;
+  altitudeError = desiredAltitude-actualAltitude;
 
   altitudeI += altitudeError*loopDt;
   altitudeI = constrain(altitudeI,-1000,1000);
@@ -334,7 +367,7 @@ void getMeasurements() {
   Drift_correction();
   Euler_angles();
 
-//  sonarAltitude = sonarAltitude*.9 + constrain(analogRead(A6),15,500)*.1;
+  //  sonarAltitude = sonarAltitude*.9 + constrain(analogRead(A6),15,500)*.1;
 }
 
 void calibrateLevel() {
@@ -360,6 +393,23 @@ void calibrateLevel() {
 
   digitalWrite(LEDRED,LOW);
 }
+
+void readPressureAltitude() {
+  // Barometer read
+  APM_BMP085.Read();
+  float tempPressureAltitude;
+  tempPressureAltitude = float(APM_BMP085.Press)/(101325.0); //101325.0;
+  tempPressureAltitude = pow(tempPressureAltitude,0.190295);
+  if ( pressureAltitude == 0 ) {
+    pressureAltitude = (1.0 - tempPressureAltitude) * 4433000 / 2.54 / 12; // ft
+  } 
+  else {
+    pressureAltitude = pressureAltitude * 0.94 + ((1.0 - tempPressureAltitude) * 4433000 / 2.54 / 12)*0.06; // ft
+  }
+  //Serial.println(pressureAltitude - groundPressureAltitude);
+}  
+
+
 
 
 
