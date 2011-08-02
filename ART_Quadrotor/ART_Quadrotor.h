@@ -26,10 +26,10 @@
 
 // PID constants
 float Kproll = 0.8;
-float Kiroll = 0.0;
+float Kiroll = 0.6;
 float Kdroll = 0.4;
 float Kppitch = 0.8;
-float Kipitch = 0.0;
+float Kipitch = 0.6;
 float Kdpitch = 0.4;
 float Kpyaw = 2.0;
 float Kiyaw = 0.0;

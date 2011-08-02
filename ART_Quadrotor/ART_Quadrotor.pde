@@ -159,7 +159,7 @@ void loop() {
       controlYaw = 0;
       rollI = 0;
       pitchI = 0;
-      if ( RCInput[3] > 1800 ) {
+      if ( RCInput[3] > 1800 && RCInput[4] > 1500 ) {
         motorsArmed = 1;
       }
       if ( RCInput[3] < 1200 ) {
@@ -205,6 +205,9 @@ void loop() {
         altitudeThrottle = pilotThrottle;
         digitalWrite(LEDYELLOW,HIGH);        
       } 
+      if ( pilotThrottle < 1200 ) {
+        motorsArmed = 0; // Can't rearm until altitude hold is turned off.
+      }
       throttle = altitudeThrottle;      
     } 
     else {
