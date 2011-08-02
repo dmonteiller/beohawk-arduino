@@ -132,7 +132,6 @@ void loop() {
     sonarTimer = millis();
 
     sonarAltitude = (pulseIn(15,HIGH)/ 58);
-    Serial.println(sonarAltitude);
     /*
     if ( currentSonarData >= 8 ) {
       currentSonarData = 0;
@@ -164,7 +163,6 @@ void loop() {
     actualAltitude = pressureAltitude;
   } else {*/
   actualAltitude = sonarAltitude;
-  Serial.println(actualAltitude);
   //}
 
   if ( millis() - timer > 10 ) { // timer at 100 Hz
