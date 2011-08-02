@@ -26,17 +26,17 @@
 
 // PID constants
 float Kproll = 0.8;
-float Kiroll = 2.0;
-float Kdroll = 1.1;
+float Kiroll = 0.0;
+float Kdroll = 0.4;
 float Kppitch = 0.8;
-float Kipitch = 2.0;
-float Kdpitch = 1.1;
-float Kpyaw = 1.5;
+float Kipitch = 0.0;
+float Kdpitch = 0.4;
+float Kpyaw = 2.0;
 float Kiyaw = 0.0;
 float Kdyaw = 0.0;
-float Kpaltitude = 15.0; //21.6;  //2
-float Kialtitude = 10.0; //12.0;  //0.1
-float Kdaltitude = 15.0; //7.2;  //1.2
+float Kpaltitude = 1.6;  //2
+float Kialtitude = 0.1;  //0.1
+float Kdaltitude = 1.4;  //1.2
 
 // Define vars //
 float loopDt = 0.02; // This will be changed per loop
@@ -47,12 +47,9 @@ long sonarTimer = 0;
 long otherTimer = 0;
 
 int motorsArmed = 0;
-float desiredAltitude = 0;
-float sonarAltitude = 0;
+int desiredAltitude = 0;
+int sonarAltitude = 0;
 int sonarData[8];
-float pressureAltitude = 0;
-float groundPressureAltitude = 0;
-float actualAltitude = 0; // This is used for PID control
 byte currentSonarData = 0;
 int landingAltitude = 0;
 int altitudeThrottle = 0;
@@ -116,40 +113,8 @@ float yaw;
 
 int motor[4];
 
-// ROS
-ros::NodeHandle nh;
-
-// Should consider switching to quaternion or making custom datatype
-geometry_msgs::Vector3 ros_rot;
-std_msgs::Int16 ros_alt;
-ros::Publisher rotation("/arduino/rotation", &ros_rot);
-ros::Publisher altitude("/arduino/altitude", &ros_alt);
-
-// Subscription
-ROS_CALLBACK(respondToArmMotors, std_msgs::Bool, new_motors)
-  motorsArmed = new_motors.data;
-}
-ROS_CALLBACK(respondToSetAltitude, std_msgs::Int16, new_altitude)
-  desiredAltitude = new_altitude.data;     // Desired Altitude
-  if (desiredAltitude <= 0) {
-    if ( isManualControl == false ) {
-      isLanding = true;
-      landingAltitude = sonarAltitude;
-      landingTime = millis();
-    }
-  } 
-  else {
-    isManualControl = false;
-    throttle = 1400;                      
-  }
-  holdingAltitude = true;
-}
-ROS_CALLBACK(respondToSetWaypoint, geometry_msgs::Pose2D, new_pose)
-  digitalWrite(LEDGREEN, HIGH);
-  //delay(200); CANNOT PUT DELAY HERE! DELAYS ARE BLOCKING!
-  digitalWrite(LEDGREEN, LOW);
-}
-
-ros::Subscriber command_motors("/arduino/arm_motors", &new_motors, respondToArmMotors );
-ros::Subscriber command_altitude("/arduino/set_altitude", &new_altitude, respondToSetAltitude );
-ros::Subscriber command_waypoint("/arduino/set_waypoint", &new_pose, respondToSetWaypoint );
+// Serial Messages
+byte data[4] = {0,0,0,0};
+byte id = 0, checkSum = 0;
+int num = 0;
+float xError = 0, yError = 0;
