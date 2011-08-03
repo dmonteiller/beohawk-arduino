@@ -36,7 +36,7 @@ float Kiyaw = 0.0;
 float Kdyaw = 0.0;
 float Kpaltitude = 1.6;  //2
 float Kialtitude = 0.1;  //0.1
-float Kdaltitude = 1.4;  //1.2
+float Kdaltitude = 1.5;  //1.2
 
 // Define vars //
 float loopDt = 0.02; // This will be changed per loop
