@@ -31,12 +31,20 @@ float Kdroll = 0.4;
 float Kppitch = 0.8;
 float Kipitch = 0.6;
 float Kdpitch = 0.4;
-float Kpyaw = 2.0;
-float Kiyaw = 0.0;
+float Kpyaw = 3.0;
+float Kiyaw = 0.2;
 float Kdyaw = 0.0;
 float Kpaltitude = 1.6;  //2
 float Kialtitude = 0.1;  //0.1
 float Kdaltitude = 1.5;  //1.2
+float KpXpose = 0.5;
+float KiXpose = 0;
+float KdXpose = 0.5;
+float KpYpose = 0.5;
+float KiYpose = 0;
+float KdYpose = 0.5;
+float KpThetapose = 0.5;
+float KiThetapose = 0;
 
 // Define vars //
 float loopDt = 0.02; // This will be changed per loop
@@ -45,6 +53,8 @@ long telemetryTimer = 0;
 long compassReadTimer = 0;
 long sonarTimer = 0;
 long otherTimer = 0;
+long timeStep = 0;
+long landingTime = 0;
 
 int motorsArmed = 0;
 float desiredAltitude = 0;
@@ -59,12 +69,22 @@ int altitudeThrottle = 0;
 bool holdingAltitude = false;
 bool isLanding = false;
 bool isManualControl = true;
-long landingTime = 0;
+bool holdingPosition = false;
+float desiredXpose = 0;
+float desiredYpose = 0;
+float desiredThetapose = 0;
+float robotXpose = 0;
+float robotYpose = 0;
+float robotThetapose = 0;
 
 float controlRoll = 0;
 float controlPitch = 0;
 float controlYaw = 0;
 float controlAltitude = 0;
+float controlXpose = 0;
+float controlYpose = 0;
+float controlThetapose = 0;
+
 
 float rollError;
 float rollErrorOld;
@@ -82,6 +102,16 @@ float altitudeError;
 float altitudeErrorOld;
 float altitudeI;
 float altitudeD;
+float XposeError;
+float XposeErrorOld;
+float XposeI;
+float XposeD;
+float YposeError;
+float YposeErrorOld;
+float YposeI;
+float YposeD;
+float ThetaposeError;
+float ThetaposeI;
 
 // ADC storage
 int ADC_Ch[6];
@@ -145,11 +175,19 @@ ROS_CALLBACK(respondToSetAltitude, std_msgs::Int16, new_altitude)
   holdingAltitude = true;
 }
 ROS_CALLBACK(respondToSetWaypoint, geometry_msgs::Pose2D, new_pose)
-  digitalWrite(LEDGREEN, HIGH);
-  //delay(200); CANNOT PUT DELAY HERE! DELAYS ARE BLOCKING!
-  digitalWrite(LEDGREEN, LOW);
+  desiredXpose = new_pose.x;          // in meters
+  desiredYpose = new_pose.y;
+  desiredThetapose = new_pose.theta;  // in degrees
 }
+ROS_CALLBACK(respondToSetRobot, geometry_msgs::Pose2D, robot_pose)
+  robotXpose = robot_pose.x;          // in meters
+  robotYpose = robot_pose.y;
+  robotThetapose = robot_pose.theta;  // in degrees
+}
+
+
 
 ros::Subscriber command_motors("/arduino/arm_motors", &new_motors, respondToArmMotors );
 ros::Subscriber command_altitude("/arduino/set_altitude", &new_altitude, respondToSetAltitude );
 ros::Subscriber command_waypoint("/arduino/set_waypoint", &new_pose, respondToSetWaypoint );
+ros::Subscriber command_robot(" /arduino/set_robot", &robot_pose, respondToSetRobot );

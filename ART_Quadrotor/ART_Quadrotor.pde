@@ -13,7 +13,7 @@
 #include "ART_Quadrotor.h"
 
 #define USE_SERIAL
-//#define USE_ROS
+#define USE_ROS
 
 void setup() {
   #ifdef USE_SERIAL
@@ -102,6 +102,7 @@ void setup() {
   nh.subscribe(command_motors);
   nh.subscribe(command_altitude);
   nh.subscribe(command_waypoint);
+  nh.subscribe(command_robot);
   #endif
 
   timer = millis();
@@ -162,16 +163,19 @@ void loop() {
 /*  if ( abs((pressureAltitude-groundPressureAltitude)-sonarAltitude) > 1.0 ) { // 1.0 ft disagreement
     actualAltitude = pressureAltitude;
   } else {*/
-  actualAltitude = sonarAltitude;
+  if (abs(actualAltitude - sonarAltitude) < 60) {
+    actualAltitude = sonarAltitude;
+  }
   //}
 
   if ( millis() - timer > 10 ) { // timer at 100 Hz
 
     loopDt = (millis()-timer)/1000.0;
     timer = millis();
-
+    
+    timeStep++;
     getMeasurements(); 
-
+    
     // Read RC receiver
     for ( int i = 0 ; i < 4 ; i++ ) {
       RCInput[i] = radioFilter(APM_RC.InputCh(i),RCInput[i]);
@@ -233,8 +237,14 @@ void loop() {
       if ( holdingAltitude == false ) {
         holdingAltitude = true;        
         desiredAltitude = actualAltitude;
+        desiredYpose = robotYpose;
+        desiredThetapose = robotThetapose;
+        desiredXpose = robotXpose;
         altitudeThrottle = pilotThrottle;
         controlAltitude = 0;
+        controlYpose = 0;
+        controlThetapose = 0;
+        controlXpose = 0;
         digitalWrite(LEDYELLOW,HIGH);        
       } 
       if ( pilotThrottle < 1200 ) {
@@ -246,20 +256,23 @@ void loop() {
       holdingAltitude = false;        
       controlAltitude = 0;
       altitudeI = 0;
+      controlYpose = 0;
+      YposeI = 0;
+      controlThetapose = 0;
+      ThetaposeI = 0;
+      controlXpose = 0;
+      XposeI = 0;
       throttle = pilotThrottle;
       digitalWrite(LEDYELLOW,LOW);
     }
     
-    Serial.print(controlAltitude);
-    Serial.print('\t');
-    Serial.println(actualAltitude);
     
     if ( motorsArmed == 1 ) {
       digitalWrite(LEDRED,HIGH);      
-      motor[0] = constrain(throttle+controlRoll+controlPitch-controlYaw+controlAltitude,1100,2000);
-      motor[1] = constrain(throttle+controlRoll-controlPitch+controlYaw+controlAltitude,1100,2000);
-      motor[2] = constrain(throttle-controlRoll-controlPitch-controlYaw+controlAltitude,1100,2000);
-      motor[3] = constrain(throttle-controlRoll+controlPitch+controlYaw+controlAltitude,1100,2000);
+      motor[0] = constrain(throttle+controlRoll+controlPitch-controlYaw+controlAltitude+controlXpose-controlYpose-controlThetapose,1100,2000);
+      motor[1] = constrain(throttle+controlRoll-controlPitch+controlYaw+controlAltitude+controlXpose+controlYpose+controlThetapose,1100,2000);
+      motor[2] = constrain(throttle-controlRoll-controlPitch-controlYaw+controlAltitude-controlXpose+controlYpose-controlThetapose,1100,2000);
+      motor[3] = constrain(throttle-controlRoll+controlPitch+controlYaw+controlAltitude-controlXpose-controlYpose+controlThetapose,1100,2000);
       APM_RC.OutputCh(0,motor[0]);
       APM_RC.OutputCh(1,motor[1]);
       APM_RC.OutputCh(2,motor[2]);
@@ -334,6 +347,39 @@ void PIDControl() {
 
   controlAltitude = Kpaltitude*altitudeError + Kialtitude*altitudeI + Kdaltitude*altitudeD;  
 
+  /////////////////////////////////////////////
+  
+  XposeError = desiredXpose - robotXpose;
+  
+  XposeI += XposeError*loopDt;
+  
+  XposeD = (XposeError - XposeErrorOld)/loopDt;
+  XposeErrorOld = XposeError;
+  
+  if (abs(XposeError) <= 1 && abs(ThetaposeError) <= 10) {
+    controlXpose = KpXpose*XposeError + KiXpose*XposeI + KdXpose*XposeD;
+  }
+  
+  /////////////////////////////////////////////
+  
+  YposeError = desiredYpose - robotYpose;
+  
+  YposeI += YposeError*loopDt;
+  
+  YposeD = (YposeError - YposeErrorOld)/loopDt;
+  YposeErrorOld = YposeError;
+  
+  if (abs(ThetaposeError) <= 10) {
+    controlYpose = KpYpose*YposeError + KiYpose*YposeI + KdYpose*YposeD;
+  }
+  
+  /////////////////////////////////////////////
+  
+  ThetaposeError = desiredThetapose - robotThetapose;
+  
+  ThetaposeI += ThetaposeError*loopDt;
+  
+  controlThetapose = KpThetapose*ThetaposeError + KiThetapose*ThetaposeI;
 
 }
 
