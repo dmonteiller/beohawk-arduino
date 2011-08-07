@@ -26,10 +26,10 @@
 
 // PID constants
 float Kproll = 0.8;
-float Kiroll = 0.6;
+float Kiroll = 0.1;
 float Kdroll = 0.4;
 float Kppitch = 0.8;
-float Kipitch = 0.6;
+float Kipitch = 0.1;
 float Kdpitch = 0.4;
 float Kpyaw = 3.0;
 float Kiyaw = 0.2;
@@ -37,13 +37,13 @@ float Kdyaw = 0.0;
 float Kpaltitude = 1.6;  //2
 float Kialtitude = 0.1;  //0.1
 float Kdaltitude = 1.5;  //1.2
-float KpXpose = 0.5;
+float KpXpose = 5.0;
 float KiXpose = 0;
-float KdXpose = 0.5;
-float KpYpose = 0.5;
+float KdXpose = 2.0;
+float KpYpose = 5.0;
 float KiYpose = 0;
-float KdYpose = 0.5;
-float KpThetapose = 0.5;
+float KdYpose = 2.0;
+float KpThetapose = 10.0;
 float KiThetapose = 0;
 
 // Define vars //

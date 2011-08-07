@@ -269,10 +269,10 @@ void loop() {
     
     if ( motorsArmed == 1 ) {
       digitalWrite(LEDRED,HIGH);      
-      motor[0] = constrain(throttle+controlRoll+controlPitch-controlYaw+controlAltitude+controlXpose-controlYpose-controlThetapose,1100,2000);
-      motor[1] = constrain(throttle+controlRoll-controlPitch+controlYaw+controlAltitude+controlXpose+controlYpose+controlThetapose,1100,2000);
-      motor[2] = constrain(throttle-controlRoll-controlPitch-controlYaw+controlAltitude-controlXpose+controlYpose-controlThetapose,1100,2000);
-      motor[3] = constrain(throttle-controlRoll+controlPitch+controlYaw+controlAltitude-controlXpose-controlYpose+controlThetapose,1100,2000);
+      motor[0] = constrain(throttle+controlRoll+controlPitch-controlYaw+controlAltitude+controlXpose+controlYpose-controlThetapose,1100,2000);
+      motor[1] = constrain(throttle+controlRoll-controlPitch+controlYaw+controlAltitude+controlXpose-controlYpose+controlThetapose,1100,2000);
+      motor[2] = constrain(throttle-controlRoll-controlPitch-controlYaw+controlAltitude-controlXpose-controlYpose-controlThetapose,1100,2000);
+      motor[3] = constrain(throttle-controlRoll+controlPitch+controlYaw+controlAltitude-controlXpose+controlYpose+controlThetapose,1100,2000);
       APM_RC.OutputCh(0,motor[0]);
       APM_RC.OutputCh(1,motor[1]);
       APM_RC.OutputCh(2,motor[2]);
@@ -369,7 +369,7 @@ void PIDControl() {
   YposeD = (YposeError - YposeErrorOld)/loopDt;
   YposeErrorOld = YposeError;
   
-  if (abs(ThetaposeError) <= 10) {
+  if (abs(ThetaposeError) <= 1.0) {
     controlYpose = KpYpose*YposeError + KiYpose*YposeI + KdYpose*YposeD;
   }
   
