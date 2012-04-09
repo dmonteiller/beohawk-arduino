@@ -21,6 +21,7 @@
 #include "Base.h"
 #include "Comm.h"
 #include "IMU.h"
+#include "RC.h"
 
 unsigned long timer_slow, timer_fast;
 
@@ -35,32 +36,32 @@ void setup () {
 }
 
 void loop () {
-  if (millis() - timer_fast > 10) { timer_fast = millis();
+  if (millis() - timer_fast > 10) {
+    timer_fast = millis();
     
     imu.update(); // Update IMU measurements.
 
-    rc.get_command(); // Get RC inputs.
+    //rc.get_command(); // Get RC inputs.
 
-    base.update_params(); // Update params based on RC control.
-    
-    // Update PID.
+    //base.update_params(); // Update params based on RC control.
 
     // Output motor commands.
-    if (base.motors_armed) {
+/*    if (base.motors_armed) {
       base.ledon(RED);
       rc.set_motor()
     } else {
       base.ledoff(RED);
       rc.set_motor(RC_MINTHROTTLE, RC_MINTHROTTLE, RC_MINTHROTTLE, RC_MINTHROTTLE);
-    }
+    }*/
   }
-  if (millis() - timer_slow > 100) { timer_slow = millis();
+  if (millis() - timer_slow > 100) {
+    timer_slow = millis();
 
 #ifdef USE_ROS
     comm.publish_tf_imu();
     nh.spinOnce();
 #else
-    comm.publish_eular();
+    comm.publish_euler();
     Serial.print("\n");
 #endif
   }

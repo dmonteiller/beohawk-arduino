@@ -13,8 +13,7 @@ class IMU {
 
   static const uint8_t maps_sensor[6];
   static const bool signs_sensor[6];
-  static const float kP_rollpitch, kI_rollpitch,
-                     kP_yaw, kI_yaw;
+  static const float kP_rollpitch, kI_rollpitch, kP_yaw, kI_yaw;
   static const float gains_gyro[3];
   static const float gain_accel;
 

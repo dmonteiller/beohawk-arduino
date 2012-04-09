@@ -11,6 +11,8 @@ class Base {
   Arduino_Mega_ISR_Registry isr_registry;
   AP_TimerProcess  adc_scheduler;
 
+  boolean motors_armed;
+
   void init (); 
 } base;
 

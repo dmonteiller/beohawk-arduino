@@ -1,5 +1,5 @@
 #ifndef _RC_H_
-#define _RC_H
+#define _RC_H_
 
 class RC;
 
@@ -9,7 +9,7 @@ class RC;
 class RC {
  public:
    
-  APM_RC apm;
+  APM_RC_APM1 apm;
 
   uint32_t inputs_raw[8];
   struct {

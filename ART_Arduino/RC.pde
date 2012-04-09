@@ -15,8 +15,8 @@ void RC::get_pilot () {
     else if (diff_input > 40) {
       inputs_raw[i] += 40; return;
     } else if (diff_input < -40) {
-      input_raw[i] -= 40; return;
-    } input_raw[i] = input_new;
+      inputs_raw[i] -= 40; return;
+    } inputs_raw[i] = input_new;
   }
 
   // Calc pilot commands.
