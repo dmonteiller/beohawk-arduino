@@ -1,7 +1,0 @@
-magnetometer
-
-sonar
-
-temperature compensation
-
-accelerometer
