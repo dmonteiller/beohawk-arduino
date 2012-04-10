@@ -1,4 +1,4 @@
-// #define USE_ROS
+#define USE_ROS
 
 #ifdef USE_ROS
   #include <ros.h>

@@ -15,8 +15,8 @@ class Comm {
   
   geometry_msgs::TransformStamped tf_imu;
 
-  char header_frame_tf_euler[] = "/imu",
-       child_frame_tf_euler[] = "/world";
+  static char header_frame_tf_euler[],
+              child_frame_tf_euler[];
   
   void publish_tf_imu ();
 
