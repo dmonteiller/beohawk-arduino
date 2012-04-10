@@ -1,7 +1,8 @@
 #include "Comm.h"
 
 #ifdef USE_ROS
-void Comm::init () {
+
+void init () {
   nh.initNode();
   pub_tf.init(nh);
 }
@@ -23,7 +24,7 @@ void Comm::publish_tf_imu () {
 }
 
 #else
-void Comm::init() {
+void init() {
   Serial.begin(115200);
 }
 
@@ -37,5 +38,4 @@ void Comm::publish_imu_raw () {
       imu.vec_gyro.x, imu.vec_gyro.y, imu.vec_gyro.z,
       imu.vec_accel.x, imu.vec_accel.y, imu.vec_accel.z);
   Serial.print("\n");
-}
 #endif
